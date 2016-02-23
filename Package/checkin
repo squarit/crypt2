@@ -34,6 +34,7 @@ def pref(pref_name):
         - default_prefs defined here.
     """
     default_prefs = {
+    'KeepKey': False
     }
     pref_value = CFPreferencesCopyAppValue(pref_name, BUNDLE_ID)
     if pref_value == None:
@@ -79,13 +80,22 @@ def escrow_key(plist):
     else:
         return False
 
+def root_read_only(filepath):
+    chown_cmd = ['/usr/sbin/chown', 'root:wheel', filepath]
+    chmod_cmd = ['/bin/chmod', '0400', filepath]
+    subprocess.Popen(chown_cmd)
+    subprocess.Popen(chmod_cmd)
+
 def main():
     if os.path.isfile(PLIST_PATH):
         plist = FoundationPlist.readPlist(PLIST_PATH)
         escrow_result = escrow_key(plist=plist)
         if escrow_result:
-            os.remove(PLIST_PATH)
-
+            keepkey = pref('KeepKey')
+            if keepkey == True:
+                root_read_only(PLIST_PATH)
+            else:
+                os.remove(PLIST_PATH)
 
 if __name__ == '__main__':
     main()
